@@ -26,22 +26,58 @@ async function run() {
           // Connect the client to the server	(optional starting in v4.7)
           //     await client.connect();
           const foodCollection = client.db('FoodShare').collection('allfoods');
-          app.get('/foods',async(req,res)=>{
+          app.get('/foods', async (req, res) => {
                const food = foodCollection.find();
                const result = await food.toArray();
                res.send(result)
           })
-          app.get('/foods',async(req, res)=>{
+          app.post('/foods', async (req, res) => {
                const newFood = req.body;
                const result = await foodCollection.insertOne(newFood)
                res.send(result)
-         })
-          app.get('/food/:id',async(req,res)=>{
+          })
+          app.get('/food/:id', async (req, res) => {
                const id = req.params.id;
-               const query = {_id : new ObjectId(id)}
+               const query = { _id: new ObjectId(id) }
                const result = await foodCollection.findOne(query);
                res.send(result)
-            })
+          })
+
+          app.get('/myfood/:email', async (req, res) => {
+               console.log(req.params.email);
+               const result = await foodCollection.find({ email: req.params.email }).toArray();
+               res.send(result) 
+          })
+          app.delete('/foods/:id',async(req,res)=>{
+               const id = req.params.id;
+               const query = {_id : new ObjectId(id)}
+               const result = await foodCollection.deleteOne(query)
+               res.send(result)
+             })
+             
+             app.put('/foods/:id',async(req,res)=>{
+               const id = req.params.id
+               const filter = {_id: new ObjectId(id)}
+               const options = {upsert: true};
+               const updatedFood = req.body;
+               const updated = {
+                 $set: {
+                   food_image: updatedFood.food_image,
+                   food_name: updatedFood.food_name,
+                   donator_name: updatedFood.donator_name,
+                   donator_image:updatedFood.donator_image,
+                   email: updatedFood.  email,
+                   additional_notes: updatedFood.additional_notes,
+                   expired_date: updatedFood.expired_date,
+                   pickup_location: updatedFood. pickup_location,
+                   food_quantity: updatedFood.food_quantity,
+                   foodStatus: updatedFood.foodStatus
+                 }
+         
+               }
+               const result = await foodCollection.updateOne(filter,updated,options) 
+               res.send(result)   
+             })
 
           // Send a ping to confirm a successful connection
           await client.db("admin").command({ ping: 1 });
