@@ -127,7 +127,7 @@ async function run() {
                const result = await foodCollection.findOne(query);
                res.send(result)
           })
-
+// 
           app.get('/myfood/:email', verifyToken, async (req, res) => {
                console.log(req.params.email);
                console.log('tok tok token', req.cookies.token);
