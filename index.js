@@ -8,7 +8,7 @@ const cookieParser = require('cookie-parser')
 const port = process.env.PORT || 5000;
 //  middle ware 
 app.use(cors({
-     origin: ['http://localhost:5173'],
+     origin: ['http://localhost:5173', 'http://localhost:5174', 'https://food-sharing-client-d4349.web.app', 'https://food-sharing-client-d4349.firebaseapp.com/'],
      credentials: true
 }));
 app.use(express.json())
@@ -47,7 +47,12 @@ const verifyToken = async (req, res, next) => {
      })
 
 }
-
+const cookieOption = {
+     httpOnly: true,
+     
+     sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",
+     secure: process.env.NODE_ENV === "production"? true: false,
+}
 async function run() {
      try {
           // Connect the client to the server	(optional starting in v4.7)
@@ -59,38 +64,20 @@ async function run() {
                const result = await food.toArray();
                res.send(result)
           })
-          // app.get('/foods', logger,verifyToken, async(req,res)=>{
-          //      console.log(req.query.email)
 
-          //      console.log('tok tok token',req.cookies.token);
-          //      console.log('user in the valid token', req.user);
-          //      // if(req.query.email !== req.user){
-          //      //      return res.status(403).send({message:'forbidden access'})
-          //      // }
-          //      let query = {};               
-          //      if(req.query?.email){
-          //           query = {email: req.query.email}
-          //      }
-          //      const result = await foodCollection.find(query).toArray()
-          //      res.send(result)
-          // })
           app.post('/foods', async (req, res) => {
                const newFood = req.body;
                const result = await foodCollection.insertOne(newFood)
                res.send(result)
           })
-          // jwt section
+
           app.post('/jwt', logger, async (req, res) => {
                const user = req.body;
 
                const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
                console.log('user for token', user);
                res
-                    .cookie('token', token, {
-                         httpOnly: true,
-                         secure: false,
-
-                    })
+                    .cookie('token', token, cookieOption)
                     .send({ success: true })
           })
           app.get('/userOut', async (req, res) => {
@@ -98,7 +85,7 @@ async function run() {
 
                console.log('login out ', user);
 
-               res.clearCookie('token', { maxAge: 0 }).send({ success: true })
+               res.clearCookie('token', {...cookieOption, maxAge: 0 }).send({ success: true })
           })
 
           app.post('/newFoods', async (req, res) => {
@@ -111,13 +98,13 @@ async function run() {
                const result = await food.toArray();
                res.send(result)
           })
-          app.get('/myFoods/:email',verifyToken, async (req, res) => {
+          app.get('/myFoods/:email', verifyToken, async (req, res) => {
                console.log(req.params.email);
                console.log('tok tok token', req.cookies.token);
                console.log('user in the valid token', req.user);
-               if(req.params.email !== req.user?.email){
-                   return res.status(403).send({message:'forbidden access'})
-               }  
+               if (req.params.email !== req.user?.email) {
+                    return res.status(403).send({ message: 'forbidden access' })
+               }
                const result = await newFoodCollection.find({ email: req.params.email }).toArray();
                res.send(result)
           })
@@ -127,14 +114,14 @@ async function run() {
                const result = await foodCollection.findOne(query);
                res.send(result)
           })
-// 
+          // 
           app.get('/myfood/:email', verifyToken, async (req, res) => {
                console.log(req.params.email);
                console.log('tok tok token', req.cookies.token);
                console.log('user in the valid token', req.user);
-                if(req.params.email !== req.user?.email){
-                    return res.status(403).send({message:'forbidden access'})
-                }  
+               if (req.params.email !== req.user?.email) {
+                    return res.status(403).send({ message: 'forbidden access' })
+               }
                const result = await foodCollection.find({ email: req.params.email }).toArray();
                res.send(result)
           })
